@@ -4,9 +4,9 @@
 #       (See accompanying file LICENSE_1_0.txt or copy at
 #           http://www.boost.org/LICENSE_1_0.txt)
 
-cmake_minimum_required(VERSION 2.8.0)
-project(libsimdpp)
-set(PROJECT_VERSION "2.1")
+# CMake 3.8 introduced target compile feature: cxx_std_11
+cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
+project(libsimdpp VERSION 2.1 LANGUAGES CXX)
 set(SIMDPP_API_VERSION "2.1")
 
 set(PKG_NAME "${CMAKE_PROJECT_NAME}")
@@ -34,7 +34,8 @@ message(STATUS "Checking instruction sets to run tests for on this host...")
 simdpp_get_runnable_archs(NATIVE_ARCHS)
 # ------------------------------------------------------------------------------
 
-set(SIMDPP_INCLUDEDIR "${CMAKE_INSTALL_PREFIX}/include/${PKG_NAME}-${SIMDPP_API_VERSION}")
+set(SIMDPP_INCLUDEDIR_ENDING "include/${PKG_NAME}-${SIMDPP_API_VERSION}")
+set(SIMDPP_INCLUDEDIR "${CMAKE_INSTALL_PREFIX}/${SIMDPP_INCLUDEDIR_ENDING}")
 set(SIMDPP_DOCDIR "${CMAKE_INSTALL_PREFIX}/share/doc/${PKG_NAME}")
 set(SIMDPP_PKGCONFIGDIR "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
 
@@ -53,3 +54,44 @@ enable_testing()
 
 add_subdirectory(simdpp)
 add_subdirectory(test)
+
+set(cmake_configuration_install_dir lib/cmake/libsimdpp)
+
+install(
+    EXPORT
+        libsimdpp_Targets
+    DESTINATION
+        ${cmake_configuration_install_dir}
+    FILE
+        libsimdpp_Targets.cmake
+    NAMESPACE
+        libsimdpp::
+)
+
+export(
+    EXPORT
+        libsimdpp_Targets
+    FILE
+        libsimdpp_Targets.cmake
+    NAMESPACE
+        libsimdpp::
+)
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file("libsimdppConfigVersion.cmake"
+    VERSION
+        ${SIMDPP_API_VERSION}
+    COMPATIBILITY
+        SameMajorVersion
+)
+
+configure_file(cmake/libsimdppConfig.cmake.in ${CMAKE_BINARY_DIR}/libsimdppConfig.cmake COPYONLY)
+
+install(
+    FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/Export/${cmake_configuration_install_dir}/libsimdpp_Targets.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/libsimdppConfigVersion.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/libsimdppConfig.cmake
+    DESTINATION
+        ${cmake_configuration_install_dir}
+)
