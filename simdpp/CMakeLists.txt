@@ -476,9 +476,7 @@ if(${ENABLE_HEADER_TESTS} STREQUAL "1")
             add_dependencies(check_headers "${TEST_TARGET}")
         endforeach()
     endforeach()
-
 endif()
-
 
 add_library(libsimdpp INTERFACE)
 add_library(simdpp::libsimdpp ALIAS libsimdpp)
@@ -495,42 +493,34 @@ install(TARGETS libsimdpp EXPORT libsimdpp_Targets
   INCLUDES DESTINATION include
 )
 
-foreach(macro_name
-    SIMDPP_ARCH_X86_SSE2
-    SIMDPP_ARCH_X86_SSE3
-    SIMDPP_ARCH_X86_SSSE3
-    SIMDPP_ARCH_X86_SSE4_1
-    SIMDPP_ARCH_X86_POPCNT_INSN
-    SIMDPP_ARCH_X86_AVX
-    SIMDPP_ARCH_X86_FMA3
-    SIMDPP_ARCH_X86_FMA4
-    SIMDPP_ARCH_X86_XOP
-    SIMDPP_ARCH_X86_AVX2
-    SIMDPP_ARCH_X86_AVX512F
-    SIMDPP_ARCH_X86_AVX512BW
-    SIMDPP_ARCH_X86_AVX512DQ
-    SIMDPP_ARCH_X86_AVX512VL
-    SIMDPP_ARCH_ARM_NEON
-    SIMDPP_ARCH_ARM_NEON_FLT_SP
-    SIMDPP_ARCH_POWER_ALTIVEC
-    SIMDPP_ARCH_POWER_VSX_206
-    SIMDPP_ARCH_POWER_VSX_207
-    SIMDPP_ARCH_MIPS_MSA
+set(simd_architectures
+    ARCH_X86_SSE2
+    ARCH_X86_SSE3
+    ARCH_X86_SSSE3
+    ARCH_X86_SSE4_1
+    ARCH_X86_POPCNT_INSN
+    ARCH_X86_AVX
+    ARCH_X86_AVX2
+    ARCH_X86_AVX512F
+    ARCH_X86_AVX512BW
+    ARCH_X86_AVX512DQ
+    ARCH_X86_AVX512VL
+    ARCH_ARM_NEON
+    ARCH_ARM64_NEON
 )
-#    Alternatively we could also prepend "enable" to the interface name:
-#    set(interface_name enable${macro_name})
-    set(interface_name ${macro_name})
-    add_library(${interface_name} INTERFACE)
-    add_library(simdpp::${interface_name} ALIAS ${interface_name})
-    target_link_libraries(${interface_name} INTERFACE simdpp::libsimdpp)
-    target_compile_definitions(${interface_name}
-        INTERFACE
-	    ${macro_name}
-    )
+
+find_package(simd-compile-options REQUIRED)
+
+foreach(simd_arch IN LISTS simd_architectures)
+    add_library(${simd_arch} INTERFACE)
+    add_library(libsimdpp::${simd_arch} ALIAS ${simd_arch})
+    target_compile_definitions(${simd_arch} INTERFACE ${simd_arch})
+    target_link_libraries(${simd_arch} INTERFACE simd-compile-options::${simd_arch} simdpp::libsimdpp)
     install(
         TARGETS
-            ${interface_name}
+            ${simd_arch}
         EXPORT
+
             libsimdpp_Targets
         INCLUDES
         DESTINATION
